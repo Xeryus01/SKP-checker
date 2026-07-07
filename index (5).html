@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pemeriksa Bukti Dukung SKP</title>
+<style>
+  :root{
+    --bg:#f5f6f8;
+    --bg-accent:#eaf1fb;
+    --surface:#ffffff;
+    --surface-2:#f8fafc;
+    --surface-3:#f1f3f6;
+    --border:#e6e8ec;
+    --border-strong:#d7dae0;
+    --text:#1f2430;
+    --text-soft:#6b7280;
+    --text-faint:#9aa1ad;
+    --accent:#2563eb;
+    --accent-dark:#1e40af;
+    --accent-soft:#eef4ff;
+    --radius:16px;
+    --radius-sm:10px;
+    --shadow-sm:0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.05);
+    --shadow-md:0 4px 14px rgba(16,24,40,.07), 0 2px 6px rgba(16,24,40,.04);
+    --shadow-lg:0 18px 40px rgba(16,24,40,.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#161719;
+      --bg-accent:#1c2536;
+      --surface:#202124;
+      --surface-2:#26282c;
+      --surface-3:#2d2f34;
+      --border:#34363c;
+      --border-strong:#3f424a;
+      --text:#f4f5f7;
+      --text-soft:#a9adb7;
+      --text-faint:#7c8089;
+      --accent:#5e9fe8;
+      --accent-dark:#7cb2ee;
+      --accent-soft:#1e2a3f;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+      --shadow-md:0 6px 18px rgba(0,0,0,.45);
+      --shadow-lg:0 22px 48px rgba(0,0,0,.55);
+    }
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 460px at 50% -160px, var(--bg-accent), transparent 70%),
+      var(--bg);
+    background-attachment:fixed;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    margin:0;
+    padding:32px 20px 64px;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  .wrap{max-width:1240px;margin:0 auto;}
+
+  /* ---------- Hero ---------- */
+  .hero{text-align:center;margin-bottom:26px;}
+  .hero-badge{
+    width:60px;height:60px;border-radius:18px;margin:0 auto 14px;
+    display:flex;align-items:center;justify-content:center;font-size:30px;
+    background:linear-gradient(145deg,var(--accent),var(--accent-dark));
+    box-shadow:0 10px 24px rgba(37,99,235,.35);
+  }
+  .hero h1{
+    font-size:30px;font-weight:750;letter-spacing:-.02em;
+    margin:0 0 8px;color:var(--text);
+  }
+  .subtitle{
+    color:var(--text-soft);margin:0 auto;font-size:15px;
+    max-width:680px;line-height:1.6;
+  }
+  .subtitle b{color:var(--text);font-weight:600;}
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    background:var(--surface);
+    padding:22px;
+    border-radius:var(--radius);
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-md);
+    margin-bottom:26px;
+  }
+  .drop{
+    border:1.5px dashed var(--border-strong);
+    border-radius:var(--radius-sm);
+    padding:26px;
+    text-align:center;
+    transition:.18s ease;
+    cursor:pointer;
+    display:block;
+    background:var(--surface-2);
+  }
+  .drop:hover{border-color:var(--accent);background:var(--accent-soft);}
+  .drop.drag{border-color:var(--accent);background:var(--accent-soft);transform:scale(1.005);}
+  .drop .dicon{font-size:34px;margin:0 0 6px;}
+  .drop p{margin:4px 0;color:var(--text-soft);font-size:14px;}
+  .drop b{color:var(--accent);}
+  .drop .tiny{font-size:12px;color:var(--text-faint);}
+  input[type=file]{display:none;}
+
+  .divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--text-faint);font-size:12px;text-transform:uppercase;letter-spacing:.08em;}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border);}
+
+  .manual-input textarea{
+    width:100%;min-height:76px;padding:12px 14px;border:1px solid var(--border);
+    border-radius:var(--radius-sm);font-size:13px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical;
+    background:var(--surface-2);color:var(--text);transition:.15s;
+  }
+  .manual-input textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .manual-input .row{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;align-items:center;}
+  .primary-btn{
+    background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);
+    padding:11px 20px;cursor:pointer;font-size:14px;font-weight:650;transition:.15s;
+    box-shadow:var(--shadow-sm);
+  }
+  .primary-btn:hover{background:var(--accent-dark);transform:translateY(-1px);}
+  .primary-btn:active{transform:translateY(0);}
+  .hint{font-size:12.5px;color:var(--text-faint);}
+
+  /* ---------- Read progress ---------- */
+  .read-progress{margin-top:18px;display:none;}
+  .read-progress.show{display:block;}
+  .bar{height:9px;background:var(--surface-3);border-radius:6px;overflow:hidden;}
+  .bar > span{display:block;height:100%;width:0%;
+    background:linear-gradient(90deg,var(--accent),var(--accent-dark));transition:width .2s;border-radius:6px;}
+  .read-progress .txt{font-size:13px;color:var(--text-soft);margin-top:8px;}
+
+  /* ---------- Stats ---------- */
+  .stats{display:none;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:20px;}
+  .stats.show{display:grid;}
+  .stat{
+    background:var(--surface-2);border:1px solid var(--border);border-radius:12px;
+    padding:14px 12px;text-align:center;position:relative;overflow:hidden;
+  }
+  .stat::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--sc,var(--accent));opacity:.9;}
+  .stat .num{font-size:26px;font-weight:750;color:var(--text);line-height:1.1;}
+  .stat .lbl{font-size:11px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
+  .stat.s-total{--sc:var(--accent);}
+  .stat.s-google{--sc:#16a34a;}
+  .stat.s-short{--sc:#9333ea;}
+  .stat.s-lain{--sc:#64748b;}
+  .stat.s-load{--sc:#ea580c;}
+
+  /* ---------- Search + filters ---------- */
+  .search-row{margin-top:20px;display:none;gap:12px;flex-wrap:wrap;align-items:center;}
+  .search-row.show{display:flex;}
+  .search-box{position:relative;flex:1;min-width:220px;}
+  .search-box input{
+    width:100%;padding:11px 14px 11px 38px;border:1px solid var(--border);
+    border-radius:var(--radius-sm);font-size:14px;background:var(--surface-2);color:var(--text);transition:.15s;
+  }
+  .search-box input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .search-box .sicon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.6;}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;}
+  .filter-btn{
+    border:1px solid var(--border);background:var(--surface);border-radius:999px;
+    padding:9px 15px;cursor:pointer;font-size:13px;color:var(--text-soft);white-space:nowrap;
+    font-weight:550;transition:.15s;
+  }
+  .filter-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:var(--shadow-sm);}
+
+  /* ---------- Grid + cards ---------- */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  .card{
+    --c:var(--accent);--c-soft:var(--accent-soft);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    overflow:hidden;
+    box-shadow:var(--shadow-sm);
+    display:flex;flex-direction:column;
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    animation:fadeUp .4s ease both;
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--border-strong);}
+  .card[data-type="docs"]{--c:#2563eb;--c-soft:#e9f0ff;}
+  .card[data-type="sheets"]{--c:#16a34a;--c-soft:#e6f6ec;}
+  .card[data-type="slides"]{--c:#ea580c;--c-soft:#fdeee2;}
+  .card[data-type="drive-file"]{--c:#4f46e5;--c-soft:#ecebfd;}
+  .card[data-type="drive-folder"]{--c:#d97706;--c-soft:#fdf1de;}
+  .card[data-type="forms"]{--c:#7c3aed;--c-soft:#f1eafe;}
+  .card[data-type="shortlink"]{--c:#9333ea;--c-soft:#f5eafd;}
+  .card[data-type="other"]{--c:#64748b;--c-soft:#eef1f5;}
+  @media (prefers-color-scheme: dark){
+    .card[data-type="docs"]{--c:#6ea8f0;--c-soft:#18233a;}
+    .card[data-type="sheets"]{--c:#5cc98a;--c-soft:#14271c;}
+    .card[data-type="slides"]{--c:#f0894f;--c-soft:#2b1c11;}
+    .card[data-type="drive-file"]{--c:#8b83f2;--c-soft:#1e1b33;}
+    .card[data-type="drive-folder"]{--c:#e6a04a;--c-soft:#2a1f10;}
+    .card[data-type="forms"]{--c:#a883f2;--c-soft:#241a35;}
+    .card[data-type="shortlink"]{--c:#bd7cf0;--c-soft:#281733;}
+    .card[data-type="other"]{--c:#94a0b0;--c-soft:#252932;}
+  }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  .card .header{
+    padding:14px 15px 13px;
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    border-bottom:1px solid var(--border);
+    position:relative;
+  }
+  .card .header::before{content:"";position:absolute;top:0;left:0;width:100%;height:3px;background:var(--c);}
+  .card .htitle{display:flex;align-items:center;gap:10px;font-weight:650;font-size:14px;color:var(--text);}
+  .card .ticon{
+    width:32px;height:32px;border-radius:9px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:17px;
+    background:var(--c-soft);
+  }
+  .badge{
+    font-size:10.5px;padding:4px 9px;border-radius:999px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;
+    background:var(--c-soft);color:var(--c);
+  }
+  .info{padding:13px 15px;}
+  .info .id{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    word-break:break-all;background:var(--surface-2);border:1px solid var(--border);
+    padding:8px 10px;border-radius:8px;color:var(--text);display:block;font-size:12px;line-height:1.45;
+  }
+  .info .id .lbl{color:var(--text-faint);font-family:-apple-system,'Segoe UI',Arial,sans-serif;
+    font-size:10px;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px;font-weight:600;}
+  .actions{display:flex;gap:8px;margin-top:11px;}
+  .btn{
+    flex:1;text-align:center;text-decoration:none;padding:9px 10px;border-radius:8px;
+    font-size:13px;font-weight:600;border:none;cursor:pointer;transition:.15s;
+  }
+  .btn.open{background:var(--c);color:#fff;}
+  .btn.open:hover{filter:brightness(.94);}
+  .btn.copy{background:transparent;color:var(--text-soft);border:1px solid var(--border-strong);}
+  .btn.copy:hover{background:var(--surface-2);color:var(--text);}
+
+  /* ---------- Embed + loader ---------- */
+  .embed-wrap{position:relative;height:430px;background:var(--surface-3);}
+  .embed-wrap iframe{width:100%;height:100%;border:none;display:block;background:#fff;}
+  .embed-wrap .reload{
+    position:absolute;top:8px;right:8px;z-index:6;width:32px;height:32px;
+    border-radius:9px;border:1px solid var(--border);background:var(--surface);
+    color:var(--text-soft);cursor:pointer;font-size:16px;line-height:1;
+    display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);
+    transition:.15s;opacity:.9;
+  }
+  .embed-wrap .reload:hover{color:var(--accent);border-color:var(--accent);opacity:1;transform:rotate(90deg);}
+  .loader{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;background:var(--surface-2);color:var(--text-soft);transition:opacity .4s;padding:18px;text-align:center;
+  }
+  .loader.done{opacity:0;pointer-events:none;}
+  .loader.manual{background:var(--surface-2);}
+  .spinner{width:38px;height:38px;border-radius:50%;
+    border:3.5px solid var(--surface-3);border-top-color:var(--c,var(--accent));animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loader .pbar{width:66%;height:7px;background:var(--surface-3);border-radius:5px;overflow:hidden;}
+  .loader .pbar > span{display:block;height:100%;width:0%;background:var(--c,var(--accent));transition:width .3s;border-radius:5px;}
+  .loader .plabel{font-size:14px;font-weight:650;color:var(--text);}
+  .loader .pstate{font-size:12.5px;color:var(--text-soft);}
+  .loader .manual-icon{font-size:38px;}
+  .loader .manual-open{
+    background:var(--c,var(--accent));color:#fff;text-decoration:none;padding:9px 16px;
+    border-radius:8px;font-size:13px;font-weight:650;margin-top:2px;
+  }
+
+  .empty{
+    grid-column:1/-1;text-align:center;color:var(--text-faint);padding:50px 20px;font-size:15px;
+    background:var(--surface);border:1px dashed var(--border-strong);border-radius:var(--radius);
+  }
+
+  /* ---------- Pagination ---------- */
+  .page-info{text-align:center;color:var(--text-soft);font-size:13px;margin:0 0 18px;}
+  .pagination{display:none;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;margin:26px 0 8px;}
+  .pagination.show{display:flex;}
+  .page-btn{
+    min-width:40px;padding:9px 13px;border:1px solid var(--border);background:var(--surface);
+    border-radius:9px;cursor:pointer;font-size:14px;color:var(--text-soft);font-weight:550;transition:.15s;
+  }
+  .page-btn:hover:not(:disabled){background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+  .page-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700;}
+  .page-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .page-ellipsis{padding:0 4px;color:var(--text-faint);}
+
+  @media(max-width:1040px){.grid{grid-template-columns:repeat(2,1fr);}.stats{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:680px){
+    body{padding:24px 14px 48px;}
+    .grid{grid-template-columns:1fr;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .hero h1{font-size:25px;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="hero-badge">🗂️</div>
+  <h1>Pemeriksa Bukti Dukung SKP</h1>
+  <p class="subtitle">Unggah PDF SKP/evaluasi kinerja atau tempel daftar tautan. Sistem membaca semua bukti dukung &mdash; Google Drive, Docs, Sheets, Slides, folder, serta shortlink <b>s.id</b> / <b>s.bps.go.id</b> (otomatis diurai ke tautan aslinya) &mdash; lalu menampilkan pratinjau agar bisa dicek langsung satu per satu.</p>
+</header>
+
+<div class="toolbar">
+  <label class="drop" id="drop" for="pdfFile">
+    <div class="dicon">📄</div>
+    <p><b>Klik untuk memilih</b> atau jatuhkan file PDF di sini</p>
+    <p class="tiny">Hanya berkas .pdf</p>
+  </label>
+  <input type="file" id="pdfFile" accept=".pdf">
+
+  <div class="divider">atau tempel tautan</div>
+
+  <div class="manual-input">
+    <textarea id="manualText" placeholder="Tempel tautan bukti dukung di sini (satu per baris atau dipisah spasi/koma)&#10;Contoh:&#10;https://s.bps.go.id/buktidukung1&#10;https://drive.google.com/file/d/XXXX/view&#10;https://docs.google.com/spreadsheets/d/YYYY/edit"></textarea>
+    <div class="row">
+      <button class="primary-btn" id="parseManual">Proses Tautan</button>
+      <span class="hint">Berguna kalau tautan tidak terbaca otomatis dari PDF.</span>
+    </div>
+  </div>
+
+  <div class="read-progress" id="readProgress">
+    <div class="bar"><span id="readBar"></span></div>
+    <div class="txt" id="readTxt">Memproses PDF…</div>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="stat s-total"><div class="num" id="jumlah">0</div><div class="lbl">Total Bukti Dukung</div></div>
+    <div class="stat s-google"><div class="num" id="jumlahGoogle">0</div><div class="lbl">Tautan Google</div></div>
+    <div class="stat s-short"><div class="num" id="jumlahShort">0</div><div class="lbl">Shortlink</div></div>
+    <div class="stat s-lain"><div class="num" id="jumlahLain">0</div><div class="lbl">Tautan Lain</div></div>
+    <div class="stat s-load"><div class="num" id="jumlahLoaded">0</div><div class="lbl">Pratinjau Terpuat</div></div>
+  </div>
+
+  <div class="search-row" id="searchRow">
+    <div class="search-box">
+      <span class="sicon">🔍</span>
+      <input type="text" id="search" placeholder="Cari berdasarkan ID atau URL…">
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" data-f="all">Semua</button>
+      <button class="filter-btn" data-f="docs">Docs</button>
+      <button class="filter-btn" data-f="sheets">Sheets</button>
+      <button class="filter-btn" data-f="slides">Slides</button>
+      <button class="filter-btn" data-f="drive-file">Drive</button>
+      <button class="filter-btn" data-f="drive-folder">Folder</button>
+      <button class="filter-btn" data-f="shortlink">Shortlink</button>
+      <button class="filter-btn" data-f="other">Lainnya</button>
+    </div>
+  </div>
+</div>
+
+<div class="page-info" id="pageInfoTop"></div>
+<div class="grid" id="hasil"></div>
+<div class="pagination" id="pagination"></div>
+
+</div><!-- /wrap -->
+
+<script type="module">
+import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.worker.min.mjs';
+
+const $ = (id) => document.getElementById(id);
+const drop = $('drop');
+const fileInput = $('pdfFile');
+
+const PER_PAGE = 12;
+let allItems = [];
+let filteredItems = [];
+let currentPage = 1;
+let loadedCount = 0;
+
+/* ===== 1. KLASIFIKASI & PEMBUAT URL ===== */
+function classify(url){
+  let m;
+  if ((m = url.match(/docs\.google\.com\/document\/d\/([A-Za-z0-9_-]+)/)))      return { type:'docs',         id:m[1] };
+  if ((m = url.match(/docs\.google\.com\/spreadsheets\/d\/([A-Za-z0-9_-]+)/)))  return { type:'sheets',       id:m[1] };
+  if ((m = url.match(/docs\.google\.com\/presentation\/d\/([A-Za-z0-9_-]+)/)))  return { type:'slides',       id:m[1] };
+  if ((m = url.match(/docs\.google\.com\/forms\/d\/(?:e\/)?([A-Za-z0-9_-]+)/)))  return { type:'forms',        id:m[1] };
+  if ((m = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/)))         return { type:'drive-file',   id:m[1] };
+  if ((m = url.match(/drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([A-Za-z0-9_-]+)/))) return { type:'drive-folder', id:m[1] };
+  if ((m = url.match(/drive\.google\.com\/(?:open|uc)\?[^\s]*id=([A-Za-z0-9_-]+)/))) return { type:'drive-file', id:m[1] };
+  if (/^https?:\/\/s\.bps\.go\.id\//i.test(url) || /^https?:\/\/s\.id\//i.test(url)) return { type:'shortlink', id:null };
+  return { type:'other', id:null };
+}
+
+function typeMeta(t){
+  switch(t){
+    case 'docs':         return { label:'Google Docs',   icon:'📝', cls:'docs' };
+    case 'sheets':       return { label:'Google Sheets', icon:'📊', cls:'sheets' };
+    case 'slides':       return { label:'Google Slides', icon:'📽️', cls:'slides' };
+    case 'drive-file':   return { label:'Drive File',    icon:'📄', cls:'file' };
+    case 'drive-folder': return { label:'Drive Folder',  icon:'📁', cls:'folder' };
+    case 'forms':        return { label:'Google Forms',  icon:'📋', cls:'forms' };
+    case 'shortlink':    return { label:'Shortlink',     icon:'🔗', cls:'shortlink' };
+    default:             return { label:'Tautan Lain',   icon:'🌐', cls:'other' };
+  }
+}
+
+function buildEmbed(type, id, url){
+  switch(type){
+    case 'drive-file':   return `https://drive.google.com/file/d/${id}/preview`;
+    case 'drive-folder': return `https://drive.google.com/embeddedfolderview?id=${id}#grid`;
+    case 'docs':         return `https://docs.google.com/document/d/${id}/preview`;
+    case 'sheets':       return `https://docs.google.com/spreadsheets/d/${id}/preview`;
+    case 'slides':       return `https://docs.google.com/presentation/d/${id}/preview`;
+    case 'forms':        return `https://docs.google.com/forms/d/e/${id}/viewform?embedded=true`;
+    default:             return url;
+  }
+}
+function buildOpen(type, id, url){
+  switch(type){
+    case 'drive-file':   return `https://drive.google.com/file/d/${id}/view`;
+    case 'drive-folder': return `https://drive.google.com/drive/folders/${id}`;
+    case 'docs':         return `https://docs.google.com/document/d/${id}/edit`;
+    case 'sheets':       return `https://docs.google.com/spreadsheets/d/${id}/edit`;
+    case 'slides':       return `https://docs.google.com/presentation/d/${id}/edit`;
+    case 'forms':        return `https://docs.google.com/forms/d/e/${id}/viewform`;
+    default:             return url;
+  }
+}
+
+function makeItem(rawUrl){
+  const info = classify(rawUrl);
+  return {
+    raw: rawUrl, type: info.type, id: info.id,
+    resolvedUrl: rawUrl,
+    embed: buildEmbed(info.type, info.id, rawUrl),
+    open:  buildOpen(info.type, info.id, rawUrl),
+    manual: false, resolved: info.type !== 'shortlink',
+  };
+}
+
+/* ===== 2. EKSTRAKSI TAUTAN ===== */
+function extractLinks(text){
+  const found = [];
+  const seen = new Set();
+  const push = (u) => {
+    let url = u.trim().replace(/[)\].,;”“"'>]+$/,'');
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    const key = url.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key); found.push(url);
+  };
+  let m;
+  const shortRe = /(?:https?:\/\/)?(?:s\.bps\.go\.id|s\.id)\/[A-Za-z0-9_\-\.\/]+/gi;
+  while ((m = shortRe.exec(text)) !== null) push(m[0]);
+  const googleRe = /https?:\/\/(?:docs|drive)\.google\.com\/[^\s"'<>]+/gi;
+  while ((m = googleRe.exec(text)) !== null) push(m[0]);
+  const anyRe = /https?:\/\/[^\s"'<>]+/gi;
+  while ((m = anyRe.exec(text)) !== null) push(m[0]);
+  return found.map(makeItem);
+}
+
+/* ===== 3. PENGURAI SHORTLINK ===== */
+function extractGoogleFromHtml(html){
+  let m;
+  m = html.match(/<meta[^>]+http-equiv=["']?refresh["']?[^>]+content=["'][^"']*url=([^"'>]+)/i);
+  if (m) return m[1].trim();
+  m = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)/i);
+  if (m && /google\.com/.test(m[1])) return m[1];
+  m = html.match(/property=["']og:url["'][^>]+content=["']([^"']+)/i);
+  if (m && /google\.com/.test(m[1])) return m[1];
+  m = html.match(/https?:\/\/(?:docs|drive)\.google\.com\/[^\s"'<>\\]+/i);
+  if (m) return m[0];
+  m = html.match(/(?:window\.location(?:\.href)?|location\.href)\s*=\s*["']([^"']+)/i);
+  if (m) return m[1];
+  return null;
+}
+async function resolveShortlink(url){
+  try {
+    const r = await fetch(`https://unshorten.me/json/${encodeURIComponent(url)}`, { headers:{ 'Accept':'application/json' } });
+    if (r.ok){
+      const d = await r.json();
+      if (d && d.resolved_url && /^https?:\/\//.test(d.resolved_url)
+          && !/s\.id|s\.bps\.go\.id/i.test(d.resolved_url)) return d.resolved_url;
+    }
+  } catch(e){}
+  try {
+    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+    if (r.ok){
+      const d = await r.json();
+      if (d){
+        if (d.status && d.status.url && !/s\.id|s\.bps\.go\.id/i.test(d.status.url)
+            && /^https?:\/\//.test(d.status.url)) return d.status.url;
+        if (d.contents){ const g = extractGoogleFromHtml(d.contents); if (g) return g; }
+      }
+    }
+  } catch(e){}
+  return null;
+}
+
+/* ===== 4. INPUT ===== */
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => {
+  e.preventDefault(); drop.classList.add('drag');
+}));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => {
+  e.preventDefault(); drop.classList.remove('drag');
+}));
+drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) handleFile(f); });
+fileInput.addEventListener('change', e => { const f = e.target.files[0]; if (f) handleFile(f); });
+$('parseManual').addEventListener('click', () => {
+  const text = $('manualText').value;
+  if (!text.trim()){ alert('Tempel dulu tautannya.'); return; }
+  finishLoad(extractLinks(text));
+});
+
+function resetView(){
+  allItems = []; filteredItems = []; currentPage = 1;
+  $('hasil').innerHTML = '';
+  $('pagination').classList.remove('show');
+  $('pageInfoTop').textContent = '';
+  $('stats').classList.remove('show');
+  $('searchRow').classList.remove('show');
+}
+
+async function handleFile(file){
+  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){
+    alert('Mohon pilih berkas PDF.'); return;
+  }
+  resetView();
+  $('readProgress').classList.add('show');
+  $('readBar').style.width = '0%';
+  $('readTxt').textContent = 'Membuka PDF…';
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const numPages = pdf.numPages;
+
+  let text = '';
+  for (let i = 1; i <= numPages; i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    for (const it of content.items){ text += it.str; if (it.hasEOL) text += '\n'; }
+    text += '\n';
+    const pct = Math.round((i / numPages) * 100);
+    $('readBar').style.width = pct + '%';
+    $('readTxt').textContent = `Membaca halaman ${i} dari ${numPages} (${pct}%)`;
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  $('readTxt').textContent = 'Mengekstrak tautan bukti dukung…';
+  const glued = text.replace(/\n/g, '');
+  finishLoad(extractLinks(glued));
+}
+
+function finishLoad(items){
+  allItems = items;
+  const count = (fn) => items.filter(fn).length;
+  const googleTypes = ['docs','sheets','slides','drive-file','drive-folder','forms'];
+  $('jumlah').textContent       = items.length;
+  $('jumlahGoogle').textContent = count(i => googleTypes.includes(i.type));
+  $('jumlahShort').textContent  = count(i => i.type === 'shortlink');
+  $('jumlahLain').textContent   = count(i => i.type === 'other');
+  $('stats').classList.add('show');
+  $('readProgress').classList.remove('show');
+  if (items.length === 0){
+    $('hasil').innerHTML = '<div class="empty">Tidak ada tautan bukti dukung yang ditemukan. Coba tempel tautannya secara manual di kotak di atas.</div>';
+    return;
+  }
+  $('searchRow').classList.add('show');
+  applyFilter();
+}
+
+/* ===== 5. RENDER ===== */
+function renderPage(){
+  const grid = $('hasil');
+  grid.innerHTML = '';
+  loadedCount = 0;
+  $('jumlahLoaded').textContent = '0';
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PER_PAGE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * PER_PAGE;
+  const pageItems = filteredItems.slice(start, start + PER_PAGE);
+
+  if (filteredItems.length === 0){
+    grid.innerHTML = '<div class="empty">Tidak ada bukti dukung yang cocok dengan filter/pencarian.</div>';
+    $('pagination').classList.remove('show');
+    $('pageInfoTop').textContent = '';
+    return;
+  }
+
+  pageItems.forEach((item, i) => {
+    const globalIndex = allItems.indexOf(item);
+    const meta = typeMeta(item.type);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.index = globalIndex;
+    card.dataset.type = item.type;
+    card.style.animationDelay = (i * 30) + 'ms';
+    const shownUrl = item.resolvedUrl || item.raw;
+    card.innerHTML = `
+      <div class="header">
+        <span class="htitle"><span class="ticon">${meta.icon}</span> Bukti Dukung #${globalIndex + 1}</span>
+        <span class="badge">${meta.label}</span>
+      </div>
+      <div class="info">
+        <div class="id"><span class="lbl">${item.id ? 'ID' : 'Tautan'}</span>${item.id ? item.id : shownUrl}</div>
+        <div class="actions">
+          <a class="btn open" target="_blank" rel="noopener" href="${item.open}">Buka Tautan</a>
+          <button class="btn copy">Salin</button>
+        </div>
+      </div>
+      <div class="embed-wrap">
+        <div class="loader">
+          <div class="spinner"></div>
+          <div class="plabel">0%</div>
+          <div class="pbar"><span></span></div>
+          <div class="pstate">Menunggu untuk dimuat…</div>
+        </div>
+      </div>
+    `;
+    card.querySelector('.copy').addEventListener('click', () => {
+      const it = allItems[globalIndex];
+      navigator.clipboard?.writeText(it.id || it.resolvedUrl || it.raw);
+      const b = card.querySelector('.copy');
+      const old = b.textContent; b.textContent = 'Tersalin!';
+      setTimeout(() => b.textContent = old, 1200);
+    });
+    grid.appendChild(card);
+    observer.observe(card);
+  });
+
+  const from = start + 1, to = start + pageItems.length;
+  $('pageInfoTop').textContent =
+    `Menampilkan ${from}–${to} dari ${filteredItems.length} bukti dukung · Halaman ${currentPage}/${totalPages}`;
+  renderPagination(totalPages);
+  window.scrollTo({ top: $('hasil').offsetTop - 120, behavior: 'smooth' });
+}
+
+function renderPagination(totalPages){
+  const wrap = $('pagination');
+  wrap.innerHTML = '';
+  if (totalPages <= 1){ wrap.classList.remove('show'); return; }
+  wrap.classList.add('show');
+  const addBtn = (label, page, opts = {}) => {
+    const b = document.createElement('button');
+    b.className = 'page-btn' + (opts.active ? ' active' : '');
+    b.textContent = label;
+    if (opts.disabled) b.disabled = true;
+    else b.addEventListener('click', () => { currentPage = page; renderPage(); });
+    wrap.appendChild(b);
+  };
+  const addEllipsis = () => { const s = document.createElement('span'); s.className = 'page-ellipsis'; s.textContent = '…'; wrap.appendChild(s); };
+  addBtn('‹ Sebelumnya', currentPage - 1, { disabled: currentPage === 1 });
+  const pages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+  const list = [...pages].filter(p => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+  let prev = 0;
+  list.forEach(p => { if (p - prev > 1) addEllipsis(); addBtn(String(p), p, { active: p === currentPage }); prev = p; });
+  addBtn('Berikutnya ›', currentPage + 1, { disabled: currentPage === totalPages });
+}
+
+/* ===== 6. LAZY LOAD + URAI SHORTLINK ===== */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting){ loadEmbed(entry.target); observer.unobserve(entry.target); }
+  });
+}, { rootMargin: '300px' });
+
+// Antrean pemuatan: batasi jumlah iframe Google yang dimuat bersamaan supaya
+// tidak kena throttling — penyebab utama pratinjau (khususnya Slides) "error".
+const MAX_CONCURRENT = 3;
+let activeLoads = 0;
+const loadQueue = [];
+function pumpQueue(){
+  while (activeLoads < MAX_CONCURRENT && loadQueue.length){
+    const job = loadQueue.shift();
+    activeLoads++;
+    job(() => { activeLoads--; setTimeout(pumpQueue, 350); });
+  }
+}
+function enqueueLoad(job){ loadQueue.push(job); pumpQueue(); }
+
+function updateCardMeta(card, item){
+  const meta = typeMeta(item.type);
+  card.dataset.type = item.type;
+  card.querySelector('.ticon').textContent = meta.icon;
+  card.querySelector('.badge').textContent = meta.label;
+  const idBox = card.querySelector('.info .id');
+  idBox.innerHTML = `<span class="lbl">${item.id ? 'ID' : 'Tautan'}</span>${item.id ? item.id : (item.resolvedUrl || item.raw)}`;
+  card.querySelector('.btn.open').href = item.open;
+}
+
+async function loadEmbed(card){
+  const idx = +card.dataset.index;
+  const item = allItems[idx];
+
+  // Urai shortlink lebih dulu (di luar antrean iframe)
+  if (item.type === 'shortlink' && !item.resolved){
+    const ps = card.querySelector('.embed-wrap .pstate');
+    if (ps) ps.textContent = 'Mengurai tautan pendek…';
+    const resolved = await resolveShortlink(item.raw);
+    item.resolved = true;
+    if (resolved){
+      const info = classify(resolved);
+      item.type = (info.type === 'shortlink') ? 'other' : info.type;
+      item.id = info.id;
+      item.resolvedUrl = resolved;
+      item.embed = buildEmbed(item.type, item.id, resolved);
+      item.open  = buildOpen(item.type, item.id, resolved);
+      updateCardMeta(card, item);
+    } else {
+      item.resolvedUrl = item.raw; item.embed = item.raw;
+      item.manual = true;
+      item.manualMsg = 'Tautan pendek tidak bisa diurai otomatis';
+    }
+  }
+
+  mountPreview(card, item);
+}
+
+// (Re)pasang pratinjau di sebuah kartu — dipakai saat pertama tampil & saat ditekan ↻
+function mountPreview(card, item){
+  const wrap = card.querySelector('.embed-wrap');
+  wrap.innerHTML =
+    '<button class="reload" title="Muat ulang pratinjau">↻</button>' +
+    '<div class="loader">' +
+      '<div class="spinner"></div>' +
+      '<div class="plabel">0%</div>' +
+      '<div class="pbar"><span></span></div>' +
+      '<div class="pstate">Menunggu giliran memuat…</div>' +
+    '</div>';
+  wrap.querySelector('.reload').addEventListener('click', () => mountPreview(card, item));
+
+  const loader = wrap.querySelector('.loader');
+  const plabel = loader.querySelector('.plabel');
+  const pbar   = loader.querySelector('.pbar > span');
+  const pstate = loader.querySelector('.pstate');
+
+  const showManual = (msg) => {
+    loader.classList.add('manual');
+    loader.innerHTML =
+      '<div class="manual-icon">🔗</div>' +
+      '<div class="plabel">' + msg + '</div>' +
+      '<div class="pstate">Tekan ↻ untuk coba lagi, atau buka di tab baru.</div>' +
+      '<a class="manual-open" target="_blank" rel="noopener" href="' + item.open + '">Buka di tab baru</a>';
+  };
+
+  if (item.manual){ showManual(item.manualMsg || 'Tidak dapat ditampilkan'); return; }
+
+  enqueueLoad((release) => {
+    let released = false;
+    const rel = () => { if (!released){ released = true; release(); } };
+    let settled = false;
+    let progress = 0;
+    pstate.textContent = 'Memuat pratinjau…';
+    const tick = setInterval(() => {
+      progress += Math.max(1, (90 - progress) * 0.08);
+      if (progress > 90) progress = 90;
+      const p = Math.round(progress);
+      plabel.textContent = p + '%'; pbar.style.width = p + '%';
+    }, 150);
+    const finish = (label) => {
+      if (settled) return; settled = true;
+      clearInterval(tick);
+      plabel.textContent = '100%'; pbar.style.width = '100%'; pstate.textContent = label;
+      if (!loader.classList.contains('done')){
+        loader.classList.add('done'); loadedCount++; $('jumlahLoaded').textContent = loadedCount;
+      }
+      rel();
+    };
+    const fail = (msg) => {
+      if (settled) return; settled = true;
+      clearInterval(tick); showManual(msg); rel();
+    };
+    const iframe = document.createElement('iframe');
+    iframe.loading = 'eager';
+    iframe.referrerPolicy = 'no-referrer-when-downgrade';
+    iframe.src = item.embed;
+    iframe.addEventListener('load', () => finish('Selesai dimuat'));
+    iframe.addEventListener('error', () => fail('Gagal memuat pratinjau'));
+    setTimeout(() => finish('Pratinjau ditampilkan'), 15000);
+    wrap.insertBefore(iframe, loader);
+  });
+}
+
+/* ===== 7. PENCARIAN & FILTER ===== */
+let currentFilter = 'all';
+$('search').addEventListener('input', applyFilter);
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.f;
+    applyFilter();
+  });
+});
+function applyFilter(){
+  const q = $('search').value.trim().toLowerCase();
+  filteredItems = allItems.filter(item => {
+    const matchType = currentFilter === 'all' || item.type === currentFilter;
+    const hay = ((item.id || '') + ' ' + (item.raw || '') + ' ' + (item.resolvedUrl || '')).toLowerCase();
+    return matchType && (!q || hay.includes(q));
+  });
+  currentPage = 1;
+  renderPage();
+}
+</script>
+
+</body>
+</html>
