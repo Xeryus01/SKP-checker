@@ -442,22 +442,24 @@ function makeItem(rawUrl){
 /* ===== 2. EKSTRAKSI TAUTAN ===== */
 function extractLinks(text){
   const found = [];
-  const seen = new Set();
-  const push = (u) => {
+  // Dedup berdasarkan POSISI di teks (bukan string URL), supaya tautan yang
+  // benar-benar kembar tetap ditampilkan, sementara pass regex yang tumpang
+  // tindih (shortlink/google/umum) tidak menghitung URL yang sama dua kali.
+  const seenPos = new Set();
+  const push = (u, pos) => {
+    if (seenPos.has(pos)) return;
     let url = u.trim().replace(/[)\].,;”“"'>]+$/,'');
     if (!url) return;
     if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-    const key = url.toLowerCase();
-    if (seen.has(key)) return;
-    seen.add(key); found.push(url);
+    seenPos.add(pos); found.push(url);
   };
   let m;
   const shortRe = /(?:https?:\/\/)?(?:s\.bps\.go\.id|s\.id)\/[A-Za-z0-9_\-\.\/]+/gi;
-  while ((m = shortRe.exec(text)) !== null) push(m[0]);
+  while ((m = shortRe.exec(text)) !== null) push(m[0], m.index);
   const googleRe = /https?:\/\/(?:docs|drive)\.google\.com\/[^\s"'<>]+/gi;
-  while ((m = googleRe.exec(text)) !== null) push(m[0]);
+  while ((m = googleRe.exec(text)) !== null) push(m[0], m.index);
   const anyRe = /https?:\/\/[^\s"'<>]+/gi;
-  while ((m = anyRe.exec(text)) !== null) push(m[0]);
+  while ((m = anyRe.exec(text)) !== null) push(m[0], m.index);
   return found.map(makeItem);
 }
 
