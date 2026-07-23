@@ -305,7 +305,7 @@
 <header class="hero">
   <div class="hero-badge">🗂️</div>
   <h1>Pemeriksa Bukti Dukung SKP</h1>
-  <p class="subtitle">Unggah PDF SKP/evaluasi kinerja atau tempel daftar tautan. Sistem membaca semua bukti dukung &mdash; Google Drive, Docs, Sheets, Slides, folder, serta shortlink <b>s.id</b> / <b>s.bps.go.id</b> (otomatis diurai ke tautan aslinya) &mdash; lalu menampilkan pratinjau agar bisa dicek langsung satu per satu.</p>
+  <p class="subtitle">Unggah PDF SKP/evaluasi kinerja atau tempel daftar tautan. Sistem membaca semua bukti dukung &mdash; termasuk <b>Copy link dari Google Drive for Desktop</b> (format <code>open?id=&hellip;&amp;usp=drive_fs</code>), Google Drive, Docs, Sheets, Slides, folder, serta shortlink <b>s.id</b> / <b>s.bps.go.id</b> (otomatis diurai ke tautan aslinya) &mdash; lalu menampilkan pratinjau agar bisa dicek langsung satu per satu.</p>
 </header>
 
 <div class="toolbar">
@@ -319,7 +319,7 @@
   <div class="divider">atau tempel tautan</div>
 
   <div class="manual-input">
-    <textarea id="manualText" placeholder="Tempel tautan bukti dukung di sini (satu per baris atau dipisah spasi/koma)&#10;Contoh:&#10;https://s.bps.go.id/buktidukung1&#10;https://drive.google.com/file/d/XXXX/view&#10;https://docs.google.com/spreadsheets/d/YYYY/edit"></textarea>
+    <textarea id="manualText" placeholder="Tempel tautan bukti dukung di sini (satu per baris atau dipisah spasi/koma)&#10;Contoh:&#10;https://drive.google.com/open?id=XXXX&usp=drive_fs&#10;https://s.bps.go.id/buktidukung1&#10;https://drive.google.com/file/d/XXXX/view&#10;https://docs.google.com/spreadsheets/d/YYYY/edit"></textarea>
     <div class="row">
       <button class="primary-btn" id="parseManual">Proses Tautan</button>
       <span class="hint">Berguna kalau tautan tidak terbaca otomatis dari PDF.</span>
@@ -430,11 +430,26 @@ function buildOpen(type, id, url){
 
 function makeItem(rawUrl){
   const info = classify(rawUrl);
+  // Link "Copy link" dari Google Drive for Desktop berbentuk:
+  //   https://drive.google.com/open?id=XXXX&usp=drive_fs   (atau &usp=drive_link)
+  // Bentuk open?id= / uc?id= TIDAK membedakan file vs folder.
+  const ambiguous = /drive\.google\.com\/(?:open|uc)\b/i.test(rawUrl) && info.type === 'drive-file';
+  // Sesuai permintaan: link drive_fs (ambigu) ditampilkan sebagai FOLDER lebih
+  // dulu; kalau tidak bisa, otomatis / manual jatuh ke tampilan file.
+  const type = ambiguous ? 'drive-folder' : info.type;
+  // URL buka/salin yang aman: open?id= akan diarahkan Google ke file/folder yang
+  // benar secara otomatis, sekaligus membuang sisa teks yang ikut terbaca saat
+  // URL terpotong antar-baris di PDF (mis. ")Sesuai Ekspektasi").
+  const openUrl = (ambiguous && info.id)
+    ? 'https://drive.google.com/open?id=' + info.id
+    : buildOpen(type, info.id, rawUrl);
+  const clean = (info.id && type !== 'shortlink' && type !== 'other') ? openUrl : rawUrl;
   return {
-    raw: rawUrl, type: info.type, id: info.id,
-    resolvedUrl: rawUrl,
-    embed: buildEmbed(info.type, info.id, rawUrl),
-    open:  buildOpen(info.type, info.id, rawUrl),
+    raw: rawUrl, type, id: info.id,
+    resolvedUrl: clean,
+    embed: buildEmbed(type, info.id, rawUrl),
+    open:  openUrl,
+    ambiguous,
     manual: false, resolved: info.type !== 'shortlink',
   };
 }
@@ -456,9 +471,9 @@ function extractLinks(text){
   let m;
   const shortRe = /(?:https?:\/\/)?(?:s\.bps\.go\.id|s\.id)\/[A-Za-z0-9_\-\.\/]+/gi;
   while ((m = shortRe.exec(text)) !== null) push(m[0], m.index);
-  const googleRe = /https?:\/\/(?:docs|drive)\.google\.com\/[^\s"'<>]+/gi;
+  const googleRe = /https?:\/\/(?:docs|drive)\.google\.com\/[^\s"'<>()]+/gi;
   while ((m = googleRe.exec(text)) !== null) push(m[0], m.index);
-  const anyRe = /https?:\/\/[^\s"'<>]+/gi;
+  const anyRe = /https?:\/\/[^\s"'<>()]+/gi;
   while ((m = anyRe.exec(text)) !== null) push(m[0], m.index);
   return found.map(makeItem);
 }
@@ -693,6 +708,14 @@ function updateCardMeta(card, item){
   card.querySelector('.btn.open').href = item.open;
 }
 
+// Beralih tampilan link ambigu (drive_fs) antara folder <-> file, lalu remount.
+function switchAmbiguous(card, item, type){
+  item.type = type;
+  item.embed = buildEmbed(type, item.id, item.open);
+  updateCardMeta(card, item);
+  mountPreview(card, item);
+}
+
 async function loadEmbed(card){
   const idx = +card.dataset.index;
   const item = allItems[idx];
@@ -746,6 +769,17 @@ function mountPreview(card, item){
       '<div class="plabel">' + msg + '</div>' +
       '<div class="pstate">Tekan ↻ untuk coba lagi, atau buka di tab baru.</div>' +
       '<a class="manual-open" target="_blank" rel="noopener" href="' + item.open + '">Buka di tab baru</a>';
+    // Link Drive for Desktop (open?id=) bisa berupa file atau folder. Default
+    // tampil sebagai folder; sediakan tombol untuk beralih ke bentuk lainnya.
+    if (item.ambiguous && item.id){
+      const asFile = item.type === 'drive-folder';
+      const fb = document.createElement('button');
+      fb.className = 'manual-open';
+      fb.style.cssText = 'background:transparent;color:var(--c,var(--accent));border:1px solid var(--border-strong);margin-top:6px;cursor:pointer;';
+      fb.textContent = asFile ? 'Tampilkan sebagai file' : 'Tampilkan sebagai folder';
+      fb.addEventListener('click', () => switchAmbiguous(card, item, asFile ? 'drive-file' : 'drive-folder'));
+      loader.appendChild(fb);
+    }
   };
 
   if (item.manual){ showManual(item.manualMsg || 'Tidak dapat ditampilkan'); return; }
@@ -775,12 +809,22 @@ function mountPreview(card, item){
       if (settled) return; settled = true;
       clearInterval(tick); showManual(msg); rel();
     };
+    // Link drive_fs ambigu yang default-nya folder: kalau gagal, otomatis coba
+    // sekali sebagai file sebelum menyerah.
+    const fallbackToFile = () => {
+      if (settled) return; settled = true;
+      clearInterval(tick); item._triedFile = true;
+      switchAmbiguous(card, item, 'drive-file'); rel();
+    };
     const iframe = document.createElement('iframe');
     iframe.loading = 'eager';
     iframe.referrerPolicy = 'no-referrer-when-downgrade';
     iframe.src = item.embed;
     iframe.addEventListener('load', () => finish('Selesai dimuat'));
-    iframe.addEventListener('error', () => fail('Gagal memuat pratinjau'));
+    iframe.addEventListener('error', () => {
+      if (item.ambiguous && item.type === 'drive-folder' && !item._triedFile) fallbackToFile();
+      else fail('Gagal memuat pratinjau');
+    });
     setTimeout(() => finish('Pratinjau ditampilkan'), 15000);
     wrap.insertBefore(iframe, loader);
   });
